@@ -1,0 +1,5 @@
+# Keep Apple private keys and local secrets out of the public legal-pages repo.
+apple-keys/
+*.p8
+.env
+.DS_Store
