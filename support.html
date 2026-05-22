@@ -23,7 +23,31 @@
       margin: 20px 0;
       box-shadow: 0 8px 24px rgba(111, 75, 182, 0.08);
     }
+    label { display: block; font-weight: 600; margin-bottom: 8px; }
+    textarea, input {
+      width: 100%;
+      border: 1px solid #dfcbdc;
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+      box-sizing: border-box;
+      background: #fffdfc;
+    }
+    textarea { min-height: 140px; resize: vertical; }
+    button {
+      background: #6f4bb6;
+      color: #fff;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
     a { color: #6f4bb6; }
+    .hint { color: #665b70; font-size: 14px; }
+    .hidden { display: none; }
+    .status { margin-top: 12px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -31,9 +55,24 @@
   <p>Need help with Cleo? We are here to help with subscriptions, account access, generated content, audio playback, and technical issues.</p>
 
   <div class="card">
-    <h2>Contact</h2>
-    <p>Email us at <a href="mailto:privacy@cleo.app">privacy@cleo.app</a>.</p>
-    <p>Please include your device model, iOS version, app version, and a short description of the issue.</p>
+    <h2>Contact support</h2>
+    <form id="support-form">
+      <p>
+        <label for="message">What happened?</label>
+        <textarea id="message" name="message" maxlength="4000" required placeholder="Describe the issue. Please do not include payment card details or other highly sensitive information."></textarea>
+      </p>
+      <p>
+        <label for="details">Device / app details (optional)</label>
+        <input id="details" name="details" maxlength="300" placeholder="Example: iPhone 15, iOS 18, Cleo 1.0" />
+      </p>
+      <p class="hidden" aria-hidden="true">
+        <label for="website">Website</label>
+        <input id="website" name="website" autocomplete="off" tabindex="-1" />
+      </p>
+      <button id="submit" type="submit">Send request</button>
+      <p id="status" class="status" role="status"></p>
+      <p class="hint">Support requests are sent securely to Cleo's support backend. This page does not expose a personal email address.</p>
+    </form>
   </div>
 
   <div class="card">
@@ -50,5 +89,38 @@
     <a href="privacy.html">Privacy Policy</a> ·
     <a href="terms.html">Terms of Service</a>
   </p>
+
+  <script>
+    const endpoint = "https://cleo-app-vp1z.onrender.com/ai/support/feedback";
+    const form = document.getElementById("support-form");
+    const statusEl = document.getElementById("status");
+    const submitButton = document.getElementById("submit");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      statusEl.textContent = "Sending…";
+      submitButton.disabled = true;
+
+      const message = document.getElementById("message").value.trim();
+      const details = document.getElementById("details").value.trim();
+      const website = document.getElementById("website").value.trim();
+      const text = details ? `${message}\n\nDevice/app details: ${details}` : message;
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, platform: "web-support", website }),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        statusEl.textContent = "Thanks — your request was sent.";
+        form.reset();
+      } catch (_error) {
+        statusEl.textContent = "Could not send the request. Please try again from in-app Settings → Contact support.";
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
